@@ -1,0 +1,18 @@
+
+[functions]
+# Define edge functions here
+
+[functions.telegram-webhook-proxy]
+verify_jwt = false
+
+[functions.telegram-process-command]
+verify_jwt = false
+
+[functions.telegram-send-message]
+verify_jwt = false
+
+[functions.telegram-bot-setup]
+verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
