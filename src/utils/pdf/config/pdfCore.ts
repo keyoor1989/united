@@ -1,13 +1,11 @@
-
 // Import the pdfMake library and font definitions
 import pdfMake from "pdfmake/build/pdfmake";
-import * as pdfFonts from "pdfmake/build/vfs_fonts";
+import pdfFonts from "pdfmake/build/vfs_fonts";
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 
 // Register the virtual file system used by pdfMake
-// We need to explicitly handle this as TypeScript doesn't recognize the pdfMake property
-(pdfFonts as any).pdfMake = pdfMake;
-pdfMake.vfs = (pdfFonts as any).pdfMake.vfs;
+// Use type assertion to handle the vfs property safely
+pdfMake.vfs = (pdfFonts as any).vfs;
 
 // Do not define custom fonts - use pdfMake's built-in Roboto font
 // pdfMake automatically includes Roboto by default
