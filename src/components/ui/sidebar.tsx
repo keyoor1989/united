@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
@@ -562,60 +561,91 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
+// Add this type definition before the SidebarMenuButton component
+interface SidebarMenuButtonProps extends React.ComponentPropsWithoutRef<"a"> {
+  asChild?: boolean;
+  size?: "sm" | "default" | "lg";
+  isActive?: boolean;
+  tooltip?: string;
+}
+
 const SidebarMenuButton = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentProps<"button"> & {
-    asChild?: boolean
-    isActive?: boolean
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>
-  } & VariantProps<typeof sidebarMenuButtonVariants>
+  HTMLAnchorElement,
+  SidebarMenuButtonProps
 >(
   (
     {
       asChild = false,
-      isActive = false,
-      variant = "default",
       size = "default",
+      isActive,
       tooltip,
       className,
+      onClick,
+      children,
       ...props
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : "button"
-    const { isMobile, state } = useSidebar()
+    const Comp = asChild ? Slot : "a"
+    const [touchStartTime, setTouchStartTime] = React.useState<number | null>(null);
+    const [touchEndTime, setTouchEndTime] = React.useState<number | null>(null);
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    const button = (
-      <Comp
-        ref={ref}
-        data-sidebar="menu-button"
-        data-size={size}
-        data-active={isActive}
-        className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-        {...props}
-      />
-    )
+    const handleTouchStart = (event: React.TouchEvent) => {
+      setTouchStartTime(Date.now());
+    };
 
-    if (!tooltip) {
-      return button
-    }
-
-    if (typeof tooltip === "string") {
-      tooltip = {
-        children: tooltip,
+    const handleTouchEnd = (event: React.TouchEvent) => {
+      setTouchEndTime(Date.now());
+      
+      // Determine if this was a tap (short touch) - less than 300ms
+      if (touchStartTime && (Date.now() - touchStartTime < 300)) {
+        // This was a tap, trigger the click
+        if (onClick) {
+          event.preventDefault();
+          onClick(event as React.MouseEvent<HTMLAnchorElement>);
+        }
       }
-    }
+    };
+
+    const extraProps = isMobileDevice ? {
+      onTouchStart: handleTouchStart,
+      onTouchEnd: handleTouchEnd,
+    } : {};
 
     return (
-      <Tooltip>
-        <TooltipTrigger asChild>{button}</TooltipTrigger>
-        <TooltipContent
-          side="right"
-          align="center"
-          hidden={state !== "collapsed" || isMobile}
-          {...tooltip}
-        />
-      </Tooltip>
+      <>
+        <Comp
+          ref={ref}
+          data-sidebar="menu-button"
+          data-size={size}
+          data-active={isActive}
+          className={cn(
+            "peer/menu-button relative flex w-full min-w-0 select-none items-center gap-2 overflow-hidden rounded-md px-3 py-2 text-sidebar-foreground outline-none ring-sidebar-ring focus-visible:ring-2 [&>svg]:shrink-0",
+            "active:bg-sidebar-accent active:text-sidebar-accent-foreground",
+            "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+            "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
+            "aria-disabled:opacity-50 aria-disabled:pointer-events-none disabled:opacity-50 disabled:pointer-events-none",
+            "[&>span:last-child]:truncate",
+            size === "sm" && "h-7 gap-1.5 text-xs",
+            size === "default" && "h-9 text-sm",
+            size === "lg" && "h-11 gap-3 text-base",
+            className
+          )}
+          onClick={onClick}
+          {...extraProps}
+          {...props}
+        >
+          {children}
+        </Comp>
+
+        {tooltip && (
+          <TooltipTrigger asChild>
+            <span className="sr-only">{tooltip}</span>
+          </TooltipTrigger>
+        )}
+        {tooltip && <TooltipContent side="right">{tooltip}</TooltipContent>}
+      </>
     )
   }
 )
