@@ -603,7 +603,7 @@ const SidebarMenuButton = React.forwardRef<
         // This was a tap, trigger the click
         if (onClick) {
           event.preventDefault();
-          onClick(event as React.MouseEvent<HTMLAnchorElement>);
+          onClick(event as unknown as React.MouseEvent<HTMLAnchorElement>);
         }
       }
     };
@@ -613,40 +613,49 @@ const SidebarMenuButton = React.forwardRef<
       onTouchEnd: handleTouchEnd,
     } : {};
 
-    return (
-      <>
-        <Comp
-          ref={ref}
-          data-sidebar="menu-button"
-          data-size={size}
-          data-active={isActive}
-          className={cn(
-            "peer/menu-button relative flex w-full min-w-0 select-none items-center gap-2 overflow-hidden rounded-md px-3 py-2 text-sidebar-foreground outline-none ring-sidebar-ring focus-visible:ring-2 [&>svg]:shrink-0",
-            "active:bg-sidebar-accent active:text-sidebar-accent-foreground",
-            "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-            "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
-            "aria-disabled:opacity-50 aria-disabled:pointer-events-none disabled:opacity-50 disabled:pointer-events-none",
-            "[&>span:last-child]:truncate",
-            size === "sm" && "h-7 gap-1.5 text-xs",
-            size === "default" && "h-9 text-sm",
-            size === "lg" && "h-11 gap-3 text-base",
-            className
-          )}
-          onClick={onClick}
-          {...extraProps}
-          {...props}
-        >
-          {children}
-        </Comp>
-
-        {tooltip && (
-          <TooltipTrigger asChild>
-            <span className="sr-only">{tooltip}</span>
-          </TooltipTrigger>
+    // Base button component
+    const buttonComponent = (
+      <Comp
+        ref={ref}
+        data-sidebar="menu-button"
+        data-size={size}
+        data-active={isActive}
+        className={cn(
+          "peer/menu-button relative flex w-full min-w-0 select-none items-center gap-2 overflow-hidden rounded-md px-3 py-2 text-sidebar-foreground outline-none ring-sidebar-ring focus-visible:ring-2 [&>svg]:shrink-0",
+          "active:bg-sidebar-accent active:text-sidebar-accent-foreground",
+          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
+          "aria-disabled:opacity-50 aria-disabled:pointer-events-none disabled:opacity-50 disabled:pointer-events-none",
+          "[&>span:last-child]:truncate",
+          size === "sm" && "h-7 gap-1.5 text-xs",
+          size === "default" && "h-9 text-sm",
+          size === "lg" && "h-11 gap-3 text-base",
+          className
         )}
-        {tooltip && <TooltipContent side="right">{tooltip}</TooltipContent>}
-      </>
-    )
+        onClick={onClick}
+        {...extraProps}
+        {...props}
+      >
+        {children}
+      </Comp>
+    );
+
+    // If tooltip is provided, wrap the button with tooltip components
+    if (tooltip) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {buttonComponent}
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {tooltip}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    // If no tooltip, just return the button
+    return buttonComponent;
   }
 )
 SidebarMenuButton.displayName = "SidebarMenuButton"
